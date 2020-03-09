@@ -1,0 +1,49 @@
+version: '3'
+services:
+  filter-nginx:
+    build:
+      context: ./docker
+      dockerfile: nginx.docker
+    depends_on:
+      - filter-php-fpm
+    volumes:
+      - ./:/var/www
+    ports:
+      - "8555:80"
+  filter-php-fpm:
+    build:
+      context: ./docker
+      dockerfile: php-fpm.docker
+    volumes:
+      - ./:/var/www
+      - ./storage:/var/www/storage
+    links:
+      - mysql
+    environment:
+      - "DB_PORT=3306"
+      - "DB_HOST=mysql"
+  filter-php-cli:
+    build:
+      context: ./docker
+      dockerfile: php-cli.docker
+    volumes:
+      - ./:/var/www
+      - ./storage:/var/www/storage
+    working_dir: /var/www
+    links:
+      - mysql
+    environment:
+      - "DB_PORT=3306"
+      - "DB_HOST=mysql"
+    tty: true
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - ./storage/docker/mysql:/var/lib/mysql
+    environment:
+      - "MYSQL_ROOT_PASSWORD=secret"
+      - "MYSQL_USER=filter"
+      - "MYSQL_PASSWORD=secret"
+      - "MYSQL_DATABASE=filter"
+    ports:
+      - "33063:3306"
